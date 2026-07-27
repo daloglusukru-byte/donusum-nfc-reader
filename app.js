@@ -51,8 +51,6 @@ let state = {
 // ---------------------------------------------------------------
 const RADIO_SOURCES = {
   lofi:      'https://stream.zeno.fm/f3wvbbqmdg8uv',
-  classical: 'https://stream.zeno.fm/4gq3vv27z8uv',
-  jazz:      'https://stream.zeno.fm/6591s8e34h8uv',
   ambient:   'https://stream.zeno.fm/0r0xa792kwzuv',
 };
 
