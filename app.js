@@ -504,11 +504,8 @@ async function init() {
   // 3. Radio volume
   dom.radioVolume.value = state.radioVolume;
 
-  // 4. Supabase config inputları doldur (varsa)
-  dom.cfgSupabaseUrl.value = localStorage.getItem(SUPABASE_URL_KEY) || '';
-  dom.cfgSupabaseKey.value = localStorage.getItem(SUPABASE_KEY_KEY) || '';
 
-  // 5. Supabase başlat
+  // 4. Supabase başlat
   await initSupabase();
 
   // 6. Kitap verisini yükle (Supabase veya fallback)
