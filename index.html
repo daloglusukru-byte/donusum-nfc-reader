@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Dönüşüm — Franz Kafka | NFC Dijital Kitap</title>
+  
+  <!-- Google Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Lora:ital,wght@0,400;0,600;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  
+  <!-- PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="theme-parchment">
+
+  <!-- APP CONTAINER -->
+  <div id="app">
+
+    <!-- 1. LANDING SCREEN (KARŞILAMA EKRANI) -->
+    <section id="screen-landing" class="screen active">
+      <div class="landing-background">
+        <div class="bg-blur-circle circle-1"></div>
+        <div class="bg-blur-circle circle-2"></div>
+      </div>
+
+      <div class="landing-content">
+        <div class="nfc-badge">
+          <i class="fa-solid fa-wifi"></i>
+          <span>NFC DİJİTAL KİTAP</span>
+        </div>
+
+        <div class="book-cover-wrapper">
+          <div class="book-3d-card">
+            <img id="landing-cover" src="../../Donusum_On_Kapak.png" alt="Dönüşüm Kitap Kapağı" />
+            <div class="book-spine-effect"></div>
+          </div>
+        </div>
+
+        <div class="book-meta">
+          <h1 id="landing-title" class="book-title">Dönüşüm</h1>
+          <p id="landing-author" class="book-author">Franz Kafka</p>
+          <div class="book-tags">
+            <span class="tag"><i class="fa-solid fa-feather"></i> Dünya Klasikleri</span>
+            <span class="tag"><i class="fa-solid fa-clock"></i> ~45 dk Okuma</span>
+          </div>
+        </div>
+
+        <div class="book-quote-card">
+          <i class="fa-solid fa-quote-left quote-icon"></i>
+          <p id="landing-quote" class="quote-text">
+            "Bir sabah bunaltıcı düşlerden uyandığında, kendini yatağında devasa bir böceğe dönüşmüş olarak buldu."
+          </p>
+        </div>
+
+        <div class="landing-actions">
+          <button id="btn-start-reading" class="btn-primary">
+            <i class="fa-solid fa-book-open"></i>
+            <span>Okumaya Başla</span>
+          </button>
+          
+          <div id="resume-banner" class="resume-banner hidden">
+            <i class="fa-solid fa-bookmark"></i>
+            <span>Kaldığın yer: Sayfa <strong id="resume-page-num">1</strong></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. READER SCREEN (KİTAP OKUYUCU EKRANI) -->
+    <section id="screen-reader" class="screen">
+      
+      <!-- TOP NAVBAR -->
+      <header class="reader-header">
+        <button id="btn-back-home" class="icon-btn" title="Ana Sayfa">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+
+        <div class="reader-title-group">
+          <span class="reader-book-title">Dönüşüm</span>
+          <span id="reader-page-indicator" class="reader-page-info">Sayfa 1 / --</span>
+        </div>
+
+        <div class="header-actions">
+          <button id="btn-toggle-radio" class="icon-btn" title="Ambiyans Radyo">
+            <i class="fa-solid fa-radio"></i>
+            <span class="radio-dot hidden"></span>
+          </button>
+          <button id="btn-toggle-settings" class="icon-btn" title="Ayarlar & Temalar">
+            <i class="fa-solid fa-sliders"></i>
+          </button>
+          <button id="btn-toggle-bookmark" class="icon-btn" title="Yer İmi Ekle">
+            <i class="fa-regular fa-bookmark" id="bookmark-icon"></i>
+          </button>
+        </div>
+
+        <!-- PROGRESS BAR -->
+        <div class="reading-progress-track">
+          <div id="reading-progress-bar" class="reading-progress-fill"></div>
+        </div>
+      </header>
+
+      <!-- MAIN CANVAS & SCROLL AREA -->
+      <main id="pdf-container" class="pdf-container">
+        <div id="pdf-loading-spinner" class="spinner-overlay">
+          <div class="spinner"></div>
+          <p>Kitap Yükleniyor...</p>
+        </div>
+        <div id="pdf-render-wrapper" class="pdf-render-wrapper">
+          <canvas id="pdf-render-canvas"></canvas>
+        </div>
+      </main>
+
+      <!-- BOTTOM NAVIGATION BAR -->
+      <footer class="reader-footer">
+        <button id="btn-prev-page" class="nav-btn">
+          <i class="fa-solid fa-chevron-left"></i>
+          <span>Önceki</span>
+        </button>
+
+        <div class="page-slider-group">
+          <input type="range" id="page-slider" min="1" max="1" value="1" />
+        </div>
+
+        <button id="btn-next-page" class="nav-btn">
+          <span>Sonraki</span>
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      </footer>
+
+    </section>
+
+    <!-- AMBIENT RADIO MODAL / DRAWER -->
+    <div id="modal-radio" class="drawer-modal hidden">
+      <div class="drawer-overlay"></div>
+      <div class="drawer-content">
+        <div class="drawer-header">
+          <h3><i class="fa-solid fa-radio"></i> Ambiyans Okuma Radyosu</h3>
+          <button class="btn-close-drawer"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        
+        <div class="radio-channels">
+          <div class="radio-card active" data-channel="off">
+            <div class="radio-icon"><i class="fa-solid fa-volume-xmark"></i></div>
+            <div class="radio-info">
+              <h4>Sessiz Mod</h4>
+              <p>Radyoyu kapat</p>
+            </div>
+          </div>
+
+          <div class="radio-card" data-channel="rain">
+            <div class="radio-icon"><i class="fa-solid fa-cloud-showers-heavy"></i></div>
+            <div class="radio-info">
+              <h4>Gece Yağmuru</h4>
+              <p>Hafif yağmur & pencere damlaları</p>
+            </div>
+            <i class="fa-solid fa-play play-indicator"></i>
+          </div>
+
+          <div class="radio-card" data-channel="cafe">
+            <div class="radio-icon"><i class="fa-solid fa-mug-hot"></i></div>
+            <div class="radio-info">
+              <h4>Akşam Kafesi</h4>
+              <p>Sakin cafe jazz & kahve kokusu</p>
+            </div>
+            <i class="fa-solid fa-play play-indicator"></i>
+          </div>
+
+          <div class="radio-card" data-channel="nature">
+            <div class="radio-icon"><i class="fa-solid fa-tree"></i></div>
+            <div class="radio-info">
+              <h4>Sessiz Orman</h4>
+              <p>Kuş sesleri & rüzgar fısıltısı</p>
+            </div>
+            <i class="fa-solid fa-play play-indicator"></i>
+          </div>
+
+          <div class="radio-card" data-channel="piano">
+            <div class="radio-icon"><i class="fa-solid fa-music"></i></div>
+            <div class="radio-info">
+              <h4>Klasik Piyano</h4>
+              <p>Derin odaklanma müzikleri</p>
+            </div>
+            <i class="fa-solid fa-play play-indicator"></i>
+          </div>
+        </div>
+
+        <div class="volume-control-group">
+          <i class="fa-solid fa-volume-low"></i>
+          <input type="range" id="radio-volume" min="0" max="100" value="60" />
+          <i class="fa-solid fa-volume-high"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS MODAL / DRAWER -->
+    <div id="modal-settings" class="drawer-modal hidden">
+      <div class="drawer-overlay"></div>
+      <div class="drawer-content">
+        <div class="drawer-header">
+          <h3><i class="fa-solid fa-sliders"></i> Okuma Ayarları</h3>
+          <button class="btn-close-drawer"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div class="settings-section">
+          <h4>OKUMA TEMASI</h4>
+          <div class="theme-selector">
+            <button class="theme-btn theme-opt-parchment active" data-theme="parchment">
+              <span class="theme-sample"></span>
+              <span>Saman Kağıt</span>
+            </button>
+            <button class="theme-btn theme-opt-light" data-theme="light">
+              <span class="theme-sample"></span>
+              <span>Gündüz</span>
+            </button>
+            <button class="theme-btn theme-opt-dark" data-theme="dark">
+              <span class="theme-sample"></span>
+              <span>Gece</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h4>SAYFA BÜYÜKLÜĞÜ</h4>
+          <div class="zoom-controls">
+            <button id="btn-zoom-out" class="zoom-btn"><i class="fa-solid fa-minus"></i></button>
+            <span id="zoom-level-text">100%</span>
+            <button id="btn-zoom-in" class="zoom-btn"><i class="fa-solid fa-plus"></i></button>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h4>SUPABASE AYARLARI (İSTEĞE BAĞLI)</h4>
+          <div class="supabase-inputs">
+            <input type="text" id="cfg-supabase-url" placeholder="Supabase URL" />
+            <input type="password" id="cfg-supabase-key" placeholder="Supabase Anon Key" />
+            <button id="btn-save-supabase" class="btn-secondary">Kaydet & Yenile</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <audio id="audio-player" loop></audio>
+  <script src="app.js"></script>
+</body>
+</html>
