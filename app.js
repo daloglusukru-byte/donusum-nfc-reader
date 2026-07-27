@@ -47,13 +47,13 @@ let state = {
 };
 
 // ---------------------------------------------------------------
-// AMBIYANS RADYO KAYNAKLARI (Freesound / royalty-free)
+// AMBIYANS RADYO KAYNAKLARI (Google CDN - 100% Mobil Uyumlu)
 // ---------------------------------------------------------------
 const RADIO_SOURCES = {
-  rain:   'https://assets.mixkit.co/sfx/preview/mixkit-rain-and-thunder-with-wind-1396.mp3',
-  cafe:   'https://assets.mixkit.co/sfx/preview/mixkit-restaurant-ambience-255.mp3',
-  nature: 'https://assets.mixkit.co/sfx/preview/mixkit-forest-birds-ambience-1210.mp3',
-  piano:  'https://assets.mixkit.co/music/preview/mixkit-dreaming-big-31.mp3',
+  rain:   'https://actions.google.com/sounds/v1/weather/rain_heavy.ogg',
+  cafe:   'https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg',
+  nature: 'https://actions.google.com/sounds/v1/ambiences/outdoor_forest.ogg',
+  piano:  'https://actions.google.com/sounds/v1/music/soothing_strings.ogg',
 };
 
 // ---------------------------------------------------------------
@@ -280,13 +280,19 @@ function playChannel(channel) {
 
   dom.audioPlayer.src = src;
   dom.audioPlayer.volume = (state.radioVolume / 100);
-  dom.audioPlayer.play().catch(() => {
-    // Tarayıcı autoplay engelleyebilir — sessizce geç
-    console.warn('Autoplay engellendi, kullanıcı etkileşimi bekleniyor.');
-  });
-
-  dom.radioDot.classList.remove('hidden');
-  dom.btnToggleRadio.style.color = 'var(--accent-color)';
+  
+  // Mobil Chrome & iOS için doğrudan tetikleme
+  const playPromise = dom.audioPlayer.play();
+  if (playPromise !== undefined) {
+    playPromise.then(() => {
+      console.log('🎵 Radyo çalıyor:', channel);
+      dom.radioDot.classList.remove('hidden');
+      dom.btnToggleRadio.style.color = 'var(--accent-color)';
+    }).catch(err => {
+      console.warn('⚠️ Ses çalma engellendi:', err);
+      showToast('Sese dokunarak oynatmayı başlatın');
+    });
+  }
 }
 
 // ================================================================
