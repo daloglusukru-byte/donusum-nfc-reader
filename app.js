@@ -122,20 +122,31 @@ async function initSupabase() {
 // KİTAP VERİSİNİ YÜKLE (Supabase → Fallback: sabit değerler)
 // ================================================================
 async function loadBookData() {
-  // Supabase varsa oradan çek
   if (state.supabase) {
-    const { data, error } = await state.supabase
-      .from('kitaplar')
-      .select('*')
-      .eq('id', BOOK_ID)
-      .single();
+    try {
+      const { data, error } = await state.supabase
+        .from('kitaplar')
+        .select('*')
+        .eq('id', BOOK_ID)
+        .single();
 
-    if (data && !error) {
-      state.bookData = data;
-      applyBookDataToUI(data);
-      return data;
-    } else {
-      console.warn('Supabase veri alınamadı, fallback kullanılıyor:', error?.message);
+      if (data && !error) {
+        // Supabase veritabanında URL'ler boş kalmışsa varsayılan Storage URL'lerini aktar
+        data.kapak_url = (data.kapak_url && data.kapak_url.trim() !== '') ? data.kapak_url : DEFAULT_COVER_URL;
+        data.pdf_url   = (data.pdf_url   && data.pdf_url.trim() !== '')   ? data.pdf_url   : DEFAULT_PDF_URL;
+
+        // Supabase tablosunu da otomatik güncelle
+        state.supabase.from('kitaplar').update({
+          kapak_url: DEFAULT_COVER_URL,
+          pdf_url: DEFAULT_PDF_URL
+        }).eq('id', BOOK_ID).then(() => {});
+
+        state.bookData = data;
+        applyBookDataToUI(data);
+        return data;
+      }
+    } catch (e) {
+      console.warn('Supabase veri alınamadı, fallback kullanılıyor:', e?.message);
     }
   }
 
@@ -372,8 +383,9 @@ function bindEvents() {
   // --- LANDING ---
   dom.btnStartReading.addEventListener('click', () => {
     showScreen('screen-reader');
-    if (!state.pdfDoc && state.bookData) {
-      loadPDF(state.bookData.pdf_url);
+    const targetPdfUrl = (state.bookData && state.bookData.pdf_url) ? state.bookData.pdf_url : DEFAULT_PDF_URL;
+    if (!state.pdfDoc) {
+      loadPDF(targetPdfUrl);
     }
   });
 
