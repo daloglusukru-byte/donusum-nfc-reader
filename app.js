@@ -47,13 +47,13 @@ let state = {
 };
 
 // ---------------------------------------------------------------
-// KITAPRAFIM GERÇEK AMBİYANS RADYO KAYNAKLARI
+// 7/24 CANLI İNTERNET RADYO AKIŞLARI (Shoutcast / Icecast Streams)
 // ---------------------------------------------------------------
 const RADIO_SOURCES = {
-  lofi:      'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=relaxing-piano-113567.mp3',
-  nature:    'https://cdn.pixabay.com/download/audio/2022/03/10/audio_c8c8a73467.mp3?filename=forest-wind-and-birds-10995.mp3',
-  piano:     'https://cdn.pixabay.com/download/audio/2021/09/06/audio_780993bc92.mp3?filename=coffee-shop-chatter-ambiance-6851.mp3',
-  waterfall: 'https://cdn.pixabay.com/download/audio/2022/05/16/audio_db6591201e.mp3?filename=rain-and-thunder-112569.mp3',
+  lofi:      'https://stream.zeno.fm/f3wvbbqmdg8uv',
+  classical: 'https://stream.zeno.fm/4gq3vv27z8uv',
+  jazz:      'https://stream.zeno.fm/6591s8e34h8uv',
+  ambient:   'https://stream.zeno.fm/0r0xa792kwzuv',
 };
 
 
