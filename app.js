@@ -371,8 +371,11 @@ function bindEvents() {
   // --- LANDING ---
   dom.btnStartReading.addEventListener('click', () => {
     showScreen('screen-reader');
-    if (!state.pdfDoc && state.bookData) {
-      loadPDF(state.bookData.pdf_url);
+    if (!state.pdfDoc) {
+      const pdfUrl = (state.bookData && state.bookData.pdf_url && state.bookData.pdf_url.trim() !== '')
+        ? state.bookData.pdf_url
+        : DEFAULT_PDF_URL;
+      loadPDF(pdfUrl);
     }
   });
 
