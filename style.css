@@ -428,7 +428,12 @@ body.theme-dark .pdf-render-wrapper {
 }
 
 body.theme-parchment .pdf-render-wrapper {
-  filter: sepia(0.38) contrast(0.96) brightness(0.95);
+  background-color: var(--bg-primary);
+  filter: none;
+}
+
+body.theme-parchment .pdf-render-wrapper canvas {
+  mix-blend-mode: multiply;
 }
 
 body.theme-light .pdf-render-wrapper {
