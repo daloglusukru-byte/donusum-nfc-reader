@@ -95,9 +95,6 @@ const dom = {
   btnZoomOut:        document.getElementById('btn-zoom-out'),
   zoomLevelText:     document.getElementById('zoom-level-text'),
   audioPlayer:       document.getElementById('audio-player'),
-  cfgSupabaseUrl:    document.getElementById('cfg-supabase-url'),
-  cfgSupabaseKey:    document.getElementById('cfg-supabase-key'),
-  btnSaveSupabase:   document.getElementById('btn-save-supabase'),
 };
 
 // ================================================================
@@ -477,19 +474,6 @@ function bindEvents() {
   // --- YER İMİ ---
   dom.btnToggleBookmark.addEventListener('click', toggleBookmark);
 
-  // --- SUPABASE AYARLARI ---
-  dom.btnSaveSupabase.addEventListener('click', async () => {
-    const url = dom.cfgSupabaseUrl.value.trim();
-    const key = dom.cfgSupabaseKey.value.trim();
-    if (!url || !key) {
-      showToast('URL ve Key gerekli!');
-      return;
-    }
-    localStorage.setItem(SUPABASE_URL_KEY, url);
-    localStorage.setItem(SUPABASE_KEY_KEY, key);
-    showToast('Kaydedildi! Yenileniyor...');
-    setTimeout(() => location.reload(), 1500);
-  });
 }
 
 // ================================================================
