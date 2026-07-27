@@ -51,6 +51,8 @@ let state = {
 // ---------------------------------------------------------------
 const RADIO_SOURCES = {
   lofi:      'https://stream.zeno.fm/f3wvbbqmdg8uv',
+  classical: 'https://stream.zeno.fm/4gq3vv27z8uv',
+  jazz:      'https://stream.zeno.fm/6591s8e34h8uv',
   ambient:   'https://stream.zeno.fm/0r0xa792kwzuv',
 };
 
@@ -122,7 +124,25 @@ async function initSupabase() {
 // KİTAP VERİSİNİ YÜKLE (Supabase → Fallback: sabit değerler)
 // ================================================================
 async function loadBookData() {
-  const defaultBook = {
+  // Supabase varsa oradan çek
+  if (state.supabase) {
+    const { data, error } = await state.supabase
+      .from('kitaplar')
+      .select('*')
+      .eq('id', BOOK_ID)
+      .single();
+
+    if (data && !error) {
+      state.bookData = data;
+      applyBookDataToUI(data);
+      return data;
+    } else {
+      console.warn('Supabase veri alınamadı, fallback kullanılıyor:', error?.message);
+    }
+  }
+
+  // Fallback: sabit veriler + Supabase Storage URL'leri
+  const fallback = {
     id: 'donusum',
     baslik: 'Dönüşüm',
     yazar: 'Franz Kafka',
@@ -132,34 +152,9 @@ async function loadBookData() {
     kapak_url: DEFAULT_COVER_URL,
     pdf_url:   DEFAULT_PDF_URL,
   };
-
-  state.bookData = defaultBook;
-  applyBookDataToUI(defaultBook);
-
-  if (state.supabase) {
-    try {
-      const { data, error } = await state.supabase
-        .from('kitaplar')
-        .select('*')
-        .eq('id', BOOK_ID)
-        .single();
-
-      if (data && !error) {
-        if (data.baslik) defaultBook.baslik = data.baslik;
-        if (data.yazar) defaultBook.yazar = data.yazar;
-        if (data.ozet) defaultBook.ozet = data.ozet;
-        if (data.kapak_url && data.kapak_url.trim() !== '') defaultBook.kapak_url = data.kapak_url;
-        if (data.pdf_url && data.pdf_url.trim() !== '') defaultBook.pdf_url = data.pdf_url;
-
-        state.bookData = defaultBook;
-        applyBookDataToUI(defaultBook);
-      }
-    } catch (e) {
-      console.warn('Supabase okuma bildirimi:', e);
-    }
-  }
-
-  return defaultBook;
+  state.bookData = fallback;
+  applyBookDataToUI(fallback);
+  return fallback;
 }
 
 function applyBookDataToUI(data) {
@@ -379,9 +374,8 @@ function bindEvents() {
   // --- LANDING ---
   dom.btnStartReading.addEventListener('click', () => {
     showScreen('screen-reader');
-    const targetPdfUrl = (state.bookData && state.bookData.pdf_url) ? state.bookData.pdf_url : DEFAULT_PDF_URL;
-    if (!state.pdfDoc) {
-      loadPDF(targetPdfUrl);
+    if (!state.pdfDoc && state.bookData) {
+      loadPDF(state.bookData.pdf_url);
     }
   });
 
