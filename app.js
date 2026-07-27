@@ -47,146 +47,15 @@ let state = {
 };
 
 // ---------------------------------------------------------------
-// WEB AUDIO API AMBİYANS SENTEZLEYİCİ (Ağ/CORS Gerektirmez - %100 Mobil Uyumlu)
+// GERÇEK KİTAPRAFIM AMBİYANS RADYO YAYINLARI (MP3 Streams)
 // ---------------------------------------------------------------
-let audioCtx = null;
-let activeSoundNodes = [];
-let pianoInterval = null;
+const RADIO_SOURCES = {
+  rain:   'https://cdn.pixabay.com/download/audio/2022/05/16/audio_db6591201e.mp3?filename=rain-and-thunder-112569.mp3',
+  cafe:   'https://cdn.pixabay.com/download/audio/2021/09/06/audio_780993bc92.mp3?filename=coffee-shop-chatter-ambiance-6851.mp3',
+  nature: 'https://cdn.pixabay.com/download/audio/2022/03/10/audio_c8c8a73467.mp3?filename=forest-wind-and-birds-10995.mp3',
+  piano:  'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=relaxing-piano-113567.mp3',
+};
 
-function getAudioContext() {
-  if (!audioCtx) {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    audioCtx = new AudioContextClass();
-  }
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
-  return audioCtx;
-}
-
-function stopCurrentAmbience() {
-  activeSoundNodes.forEach(node => {
-    try { node.stop ? node.stop() : node.disconnect(); } catch(e){}
-  });
-  activeSoundNodes = [];
-  if (pianoInterval) {
-    clearInterval(pianoInterval);
-    pianoInterval = null;
-  }
-}
-
-// Pembe gürültü tamponu oluştur (Yağmur ve Rüzgar için)
-function createNoiseBuffer(ctx, type = 'pink') {
-  const bufferSize = ctx.sampleRate * 2;
-  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
-  for (let i = 0; i < bufferSize; i++) {
-    const white = Math.random() * 2 - 1;
-    if (type === 'pink') {
-      b0 = 0.99886 * b0 + white * 0.0555179;
-      b1 = 0.99332 * b1 + white * 0.0750759;
-      b2 = 0.96900 * b2 + white * 0.1538520;
-      b3 = 0.86650 * b3 + white * 0.3104856;
-      b4 = 0.55000 * b4 + white * 0.5329522;
-      b5 = -0.7616 * b5 - white * 0.0168980;
-      data[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
-      data[i] *= 0.11;
-      b6 = white * 0.115926;
-    } else {
-      data[i] = white * 0.1;
-    }
-  }
-  return buffer;
-}
-
-// Ambiyans sesleri üretici
-function playSynthAmbience(channel) {
-  const ctx = getAudioContext();
-  stopCurrentAmbience();
-
-  if (channel === 'off') return;
-
-  const masterGain = ctx.createGain();
-  masterGain.gain.value = (state.radioVolume / 100);
-  masterGain.connect(ctx.destination);
-  activeSoundNodes.push(masterGain);
-
-  if (channel === 'rain') {
-    // 🌧️ YAĞMUR SESİ
-    const noiseBuffer = createNoiseBuffer(ctx, 'pink');
-    const noiseSource = ctx.createBufferSource();
-    noiseSource.buffer = noiseBuffer;
-    noiseSource.loop = true;
-
-    const filter = ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.value = 1000;
-
-    noiseSource.connect(filter);
-    filter.connect(masterGain);
-    noiseSource.start();
-    activeSoundNodes.push(noiseSource, filter);
-
-  } else if (channel === 'nature') {
-    // 🌲 DOĞA & RÜZGAR
-    const noiseBuffer = createNoiseBuffer(ctx, 'pink');
-    const noiseSource = ctx.createBufferSource();
-    noiseSource.buffer = noiseBuffer;
-    noiseSource.loop = true;
-
-    const filter = ctx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.value = 500;
-    filter.Q.value = 3.0;
-
-    noiseSource.connect(filter);
-    filter.connect(masterGain);
-    noiseSource.start();
-    activeSoundNodes.push(noiseSource, filter);
-
-  } else if (channel === 'cafe') {
-    // ☕ KAFE AMBİYANSI
-    const noiseBuffer = createNoiseBuffer(ctx, 'pink');
-    const noiseSource = ctx.createBufferSource();
-    noiseSource.buffer = noiseBuffer;
-    noiseSource.loop = true;
-
-    const filter = ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.value = 450;
-
-    noiseSource.connect(filter);
-    filter.connect(masterGain);
-    noiseSource.start();
-    activeSoundNodes.push(noiseSource, filter);
-
-  } else if (channel === 'piano') {
-    // 🎹 DİNLENDİRİCİ PİYANO NOTALARI (Pentatonik melodi)
-    const notes = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25]; // C4, D4, E4, G4, A4, C5
-    const playNote = () => {
-      if (state.radioChannel !== 'piano') return;
-      const osc = ctx.createOscillator();
-      const noteGain = ctx.createGain();
-      
-      const freq = notes[Math.floor(Math.random() * notes.length)];
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, ctx.currentTime);
-
-      noteGain.gain.setValueAtTime(0.01, ctx.currentTime);
-      noteGain.gain.exponentialRampToValueAtTime(0.2 * (state.radioVolume / 100), ctx.currentTime + 0.1);
-      noteGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2.5);
-
-      osc.connect(noteGain);
-      noteGain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 2.6);
-    };
-
-    playNote();
-    pianoInterval = setInterval(playNote, 1800);
-  }
-}
 
 
 // ---------------------------------------------------------------
@@ -401,19 +270,27 @@ function playChannel(channel) {
   localStorage.setItem(LS_CHANNEL, channel);
 
   if (channel === 'off') {
-    stopCurrentAmbience();
+    dom.audioPlayer.pause();
+    dom.audioPlayer.src = '';
     dom.radioDot.classList.add('hidden');
     dom.btnToggleRadio.style.color = '';
     return;
   }
 
-  try {
-    playSynthAmbience(channel);
-    dom.radioDot.classList.remove('hidden');
-    dom.btnToggleRadio.style.color = 'var(--accent-color)';
-    showToast(`📻 ${channel.toUpperCase()} radyosu başlatıldı`);
-  } catch (err) {
-    console.error('Radyo başlatma hatası:', err);
+  const src = RADIO_SOURCES[channel];
+  if (!src) return;
+
+  dom.audioPlayer.src = src;
+  dom.audioPlayer.volume = (state.radioVolume / 100);
+  
+  const playPromise = dom.audioPlayer.play();
+  if (playPromise !== undefined) {
+    playPromise.then(() => {
+      dom.radioDot.classList.remove('hidden');
+      dom.btnToggleRadio.style.color = 'var(--accent-color)';
+    }).catch(err => {
+      console.warn('Ses oynatma uyarısı:', err);
+    });
   }
 }
 
