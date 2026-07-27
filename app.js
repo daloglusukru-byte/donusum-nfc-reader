@@ -199,18 +199,28 @@ async function renderPage(num) {
 
   const page = await state.pdfDoc.getPage(num);
 
-  // Container genişliğine göre otomatik ölçekle
-  const containerWidth = dom.pdfContainer.clientWidth - 32; // padding
+  // Yüksek çözünürlüklü (Retina/Mobil) kristal netliğinde yazı kalitesi (HD DPR Scaling)
+  const dpr = Math.max(window.devicePixelRatio || 1, 2);
+  const containerWidth = dom.pdfContainer.clientWidth - 32;
   const viewport0 = page.getViewport({ scale: 1 });
   const autoScale = containerWidth / viewport0.width;
-  const finalScale = autoScale * state.zoom;
+  const displayScale = autoScale * state.zoom;
+  const renderScale = displayScale * dpr;
 
-  const viewport = page.getViewport({ scale: finalScale });
+  const viewport = page.getViewport({ scale: renderScale });
 
-  dom.pdfCanvas.height = viewport.height;
-  dom.pdfCanvas.width  = viewport.width;
+  // Canvas piksel çözünürlüğü (Yüksek çözünürlük)
+  dom.pdfCanvas.width = Math.floor(viewport.width);
+  dom.pdfCanvas.height = Math.floor(viewport.height);
+
+  // Ekran görüntüleme boyutu
+  dom.pdfCanvas.style.width = Math.floor(viewport.width / dpr) + 'px';
+  dom.pdfCanvas.style.height = Math.floor(viewport.height / dpr) + 'px';
 
   const ctx = dom.pdfCanvas.getContext('2d');
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+
   await page.render({ canvasContext: ctx, viewport }).promise;
 
   state.currentPage = num;

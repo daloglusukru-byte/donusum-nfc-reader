@@ -416,9 +416,23 @@ body {
 
 .pdf-render-wrapper {
   box-shadow: 0 10px 30px var(--shadow-color);
-  border-radius: 4px;
+  border-radius: 6px;
   overflow: hidden;
-  background: #ffffff;
+  background: transparent;
+  transition: filter 0.3s ease;
+}
+
+/* KİTAP SAYFASI TEMA FİLTRELERİ (Gece, Saman Kağıt, Gündüz) */
+body.theme-dark .pdf-render-wrapper {
+  filter: invert(0.92) hue-rotate(180deg) contrast(1.15) brightness(0.92);
+}
+
+body.theme-parchment .pdf-render-wrapper {
+  filter: sepia(0.38) contrast(0.96) brightness(0.95);
+}
+
+body.theme-light .pdf-render-wrapper {
+  filter: none;
 }
 
 canvas {
